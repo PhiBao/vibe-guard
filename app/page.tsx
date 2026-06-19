@@ -40,12 +40,30 @@ type PaperLogRow = {
   proof_id: string;
 };
 
+type EvidenceFile = {
+  label: string;
+  path: string;
+  kind: "csv" | "markdown" | "json";
+};
+
+type EvidenceModal = EvidenceFile & {
+  content: string;
+};
+
+const EVIDENCE_FILES: EvidenceFile[] = [
+  { label: "paper trading log", path: "/evidence/paper-trading-log.csv", kind: "csv" },
+  { label: "backtest report", path: "/evidence/backtest-report.md", kind: "markdown" },
+  { label: "summary json", path: "/evidence/backtest-summary.json", kind: "json" },
+  { label: "equity curve", path: "/evidence/equity-curve.csv", kind: "csv" },
+];
+
 const DEFAULT_PROMPT =
   "Evaluate BTC momentum, funding pressure, and volatility. Only record a paper futures order if the risk firewall passes.";
+const STARTER_TIMESTAMP = "2026-06-19T00:00:00.000Z";
 
 const starterProof: ProofCard = {
   id: "VG-DEMO-READY",
-  createdAt: new Date().toISOString(),
+  createdAt: STARTER_TIMESTAMP,
   prompt: DEFAULT_PROMPT,
   symbol: "BTCUSDT",
   market: {
@@ -63,7 +81,7 @@ const starterProof: ProofCard = {
     tickSize: 0.1,
     candles: [],
     source: "fallback",
-    updatedAt: new Date().toISOString(),
+    updatedAt: STARTER_TIMESTAMP,
   },
   toolTrace: [
     {
@@ -266,6 +284,8 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [evidence, setEvidence] = useState<EvidenceSummary | null>(null);
   const [paperRows, setPaperRows] = useState<PaperLogRow[]>([]);
+  const [evidenceModal, setEvidenceModal] = useState<EvidenceModal | null>(null);
+  const [evidenceLoading, setEvidenceLoading] = useState<string | null>(null);
 
   const passCount = useMemo(
     () => proof.riskChecks.filter((check) => check.status === "pass").length,
@@ -348,6 +368,25 @@ export default function Home() {
     };
     await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
     setCopied(true);
+  }
+
+  async function openEvidence(file: EvidenceFile) {
+    setEvidenceLoading(file.path);
+    setError(null);
+
+    try {
+      const response = await fetch(file.path, { cache: "no-store" });
+      if (!response.ok) throw new Error(`Evidence file failed with ${response.status}`);
+      let content = await response.text();
+      if (file.kind === "json") {
+        content = JSON.stringify(JSON.parse(content), null, 2);
+      }
+      setEvidenceModal({ ...file, content });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not open evidence file");
+    } finally {
+      setEvidenceLoading(null);
+    }
   }
 
   return (
@@ -482,10 +521,16 @@ export default function Home() {
               </div>
             </div>
             <div className="evidenceLinks">
-              <a href="/evidence/paper-trading-log.csv">paper trading log</a>
-              <a href="/evidence/backtest-report.md">backtest report</a>
-              <a href="/evidence/backtest-summary.json">summary json</a>
-              <a href="/evidence/equity-curve.csv">equity curve</a>
+              {EVIDENCE_FILES.map((file) => (
+                <button
+                  key={file.path}
+                  type="button"
+                  onClick={() => void openEvidence(file)}
+                  disabled={evidenceLoading === file.path}
+                >
+                  {evidenceLoading === file.path ? "opening..." : file.label}
+                </button>
+              ))}
             </div>
             <div className="paperTableWrap">
               <table className="paperTable">
@@ -721,6 +766,37 @@ export default function Home() {
           </section>
         </section>
       </section>
+
+      {evidenceModal ? (
+        <div className="modalBackdrop" role="presentation" onClick={() => setEvidenceModal(null)}>
+          <section
+            className="evidenceModal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="evidence-modal-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="modalHeader">
+              <div>
+                <p className="eyebrow">validation artifact</p>
+                <h2 id="evidence-modal-title">{evidenceModal.label}</h2>
+              </div>
+              <button type="button" className="iconButton" onClick={() => setEvidenceModal(null)}>
+                close
+              </button>
+            </div>
+            <pre className="evidencePreview">{evidenceModal.content}</pre>
+            <div className="modalActions">
+              <a href={evidenceModal.path} download>
+                download file
+              </a>
+              <button type="button" onClick={() => setEvidenceModal(null)}>
+                done
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </main>
   );
 }

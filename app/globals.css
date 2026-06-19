@@ -448,19 +448,24 @@ input:focus {
   margin-top: 14px;
 }
 
-.evidenceLinks a {
+.evidenceLinks button {
   border: 1px solid var(--line);
   border-radius: 4px;
   color: var(--text);
+  background: rgba(5, 8, 7, 0.42);
   padding: 8px 10px;
   font-size: 12px;
-  text-decoration: none;
   text-transform: uppercase;
 }
 
-.evidenceLinks a:hover {
+.evidenceLinks button:hover:not(:disabled) {
   border-color: var(--green);
   color: var(--green);
+}
+
+.evidenceLinks button:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .paperTableWrap {
@@ -550,6 +555,83 @@ input:focus {
   line-height: 1.45;
 }
 
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(2, 6, 4, 0.78);
+}
+
+.evidenceModal {
+  width: min(980px, 100%);
+  max-height: min(760px, calc(100vh - 48px));
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #07100c;
+  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.45);
+}
+
+.modalHeader,
+.modalActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.modalActions {
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 0;
+}
+
+.modalHeader h2 {
+  margin: 5px 0 0;
+  font-size: 16px;
+  text-transform: uppercase;
+}
+
+.iconButton,
+.modalActions button,
+.modalActions a {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--text);
+  background: transparent;
+  padding: 9px 11px;
+  font-size: 12px;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.modalActions a {
+  color: #021009;
+  background: var(--green);
+  border-color: var(--green);
+  font-weight: 800;
+}
+
+.evidencePreview {
+  min-height: 0;
+  margin: 0;
+  overflow: auto;
+  padding: 16px;
+  color: var(--text);
+  background:
+    linear-gradient(rgba(40, 240, 138, 0.025) 1px, transparent 1px),
+    #050807;
+  background-size: 100% 28px;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre;
+}
+
 @media (max-width: 1080px) {
   .hero,
   .workspace,
@@ -594,5 +676,15 @@ input:focus {
   .moduleGrid,
   .orderGrid {
     grid-template-columns: 1fr;
+  }
+
+  .modalBackdrop {
+    padding: 12px;
+  }
+
+  .modalHeader,
+  .modalActions {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
