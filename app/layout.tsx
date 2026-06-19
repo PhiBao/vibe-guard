@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "VibeGuard",
-  description: "Proof-of-strategy trading agent for Bitget AI Base Camp.",
+  description: "Regime-aware trading agent for Bitget USDT futures.",
 };
 
 export default function RootLayout({

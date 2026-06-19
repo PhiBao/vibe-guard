@@ -357,8 +357,9 @@ export default function Home() {
           <p className="eyebrow">Bitget AI Base Camp S1 / Trading Agent</p>
           <h1>VibeGuard</h1>
           <p className="tagline">
-            A paper trading agent that publishes every signal, risk gate, paper order, balance
-            change, and backtest result before any autonomous action.
+            A regime-aware trading agent for Bitget futures. The MVP runs in paper mode so every
+            signal, risk gate, trade intent, balance change, and backtest result is inspectable
+            before guarded execution.
           </p>
         </div>
         <div className="heroStats">
@@ -368,7 +369,7 @@ export default function Home() {
           </div>
           <div>
             <span>mode</span>
-            <strong>paper trading ledger</strong>
+            <strong>paper-mode validation</strong>
           </div>
           <div>
             <span>evidence</span>
@@ -461,7 +462,7 @@ export default function Home() {
           <section className="panel evidencePanel">
             <div className="panelHeader">
               <span className="dot" />
-              <h2>Evidence Center</h2>
+            <h2>Validation Center</h2>
             </div>
             <div className="evidenceGrid">
               <div>

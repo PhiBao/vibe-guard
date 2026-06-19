@@ -1,12 +1,12 @@
 # VibeGuard
 
-Evidence-first paper trading agent for the Bitget AI Base Camp Hackathon, Track 1 Trading Agent.
+Regime-aware trading agent for Bitget USDT futures.
 
-VibeGuard trades a paper account across BTCUSDT, ETHUSDT, and SOLUSDT perpetuals, then publishes the evidence judges asked for: timestamp, pair, side, price, size, balance change, risk rationale, and a reproducible backtest report.
+VibeGuard is built to become an autonomous trading agent that can read market conditions, choose when to trade, size risk, and keep a complete decision record. The current MVP runs in paper mode for the Bitget AI Base Camp Hackathon, so reviewers can inspect the strategy, paper trading log, balance changes, risk rationale, and reproducible backtest before any real execution is enabled.
 
 ## Idea
 
-Autonomous trading agents have a trust problem. A judge, trader, or future user should not need to believe a black-box prompt. They should be able to inspect the market inputs, strategy logic, risk gates, paper fills, balance changes, and replayable proof card.
+Most trading bots either expose rigid rules or hide behind black-box AI output. VibeGuard is a trading agent for crypto futures operators who want adaptive strategy decisions without losing control over risk.
 
 VibeGuard's strategy is **Regime-Adaptive Majors Rotation**:
 
@@ -20,7 +20,9 @@ VibeGuard's strategy is **Regime-Adaptive Majors Rotation**:
 
 The core logic is not "AI predicts price." The agent compresses multiple market regimes into a decision, then refuses to trade unless the risk firewall accepts the setup.
 
-## Evidence
+Product target: a Bitget-native trading agent that can move from paper mode to guarded execution once operator mandates, kill switches, audit logs, and account permissions are ready.
+
+## Validation Evidence
 
 Generated artifacts are public files in [`public/evidence`](./public/evidence):
 
@@ -55,17 +57,17 @@ Completed:
 
 Development challenges solved:
 
-- **Evidence gap:** the first version only had a simulated proof card. VibeGuard now generates the required paper trading CSV and a reproducible backtest report in `public/evidence`.
-- **Trust gap:** the agent does not only display a final trade. It records signals, risk checks, paper order intent, balance impact, and downloadable artifacts.
+- **Validation gap:** the first version only had a simulated proof card. VibeGuard now has a paper-mode trading loop plus the required CSV and reproducible backtest report in `public/evidence`.
+- **Operator trust gap:** the agent does not only display a final trade. It records signals, risk checks, paper order intent, balance impact, and downloadable artifacts.
 - **API honesty:** Playbook evidence is treated as an external GetAgent/website workflow unless a stable Bitget API contract is available.
-- **Safety:** real order writes stay disabled while read-only Bitget context and paper trading remain usable for review.
+- **Safety:** real order writes stay disabled while read-only Bitget context and paper-mode validation remain usable for review.
 
 Still missing:
 
 - Real trade execution is intentionally disabled.
-- Paper trading persistence is file-based for public review, not a hosted database.
+- Paper-mode persistence is file-based for public review, not a hosted database.
 - Playbook publishing can be linked/imported manually, but backend automation is not promised.
-- Longer walk-forward tests and live paper scheduling are next steps.
+- Longer walk-forward tests, hosted paper scheduling, and guarded execution are next steps.
 
 Frameworks, models, and APIs:
 
@@ -86,9 +88,9 @@ Frameworks, models, and APIs:
 
 ## AI Trading Thoughts
 
-The strongest agentic trading products will not just place orders. They will make trading decisions auditable. An agent can be wrong, but it should not hide why it acted.
+The strongest agentic trading products will not just place orders. They will adapt to changing regimes while making decisions auditable. An agent can be wrong, but it should not hide why it acted.
 
-Bitget Agent Hub and Skill Hub point in the right direction because they give agents market perception and trading tool access. The next useful layer is evidence discipline: every autonomous decision should produce a portable record that includes inputs, risk checks, output, and balance impact.
+Bitget Agent Hub and Skill Hub point in the right direction because they give agents market perception and trading tool access. The next useful layer is an operator-grade execution discipline: every autonomous decision should produce a portable record that includes inputs, risk checks, output, and balance impact.
 
 ## Run Locally
 
