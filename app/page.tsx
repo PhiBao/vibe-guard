@@ -3,8 +3,45 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ProofCard, SymbolId } from "../lib/types";
 
+type EvidenceSummary = {
+  generatedAt: string;
+  engine: string;
+  mode: string;
+  universe: SymbolId[];
+  metrics: {
+    startingBalance: number;
+    endingBalance: number;
+    totalReturnPct: number;
+    maxDrawdownPct: number;
+    winRatePct: number;
+    trades: number;
+    flatCycles: number;
+    sharpe: number;
+  };
+  files: {
+    report: string;
+    summary: string;
+    equityCurve: string;
+    paperLog: string;
+  };
+};
+
+type PaperLogRow = {
+  timestamp: string;
+  pair: string;
+  side: string;
+  price: string;
+  size: string;
+  balance_before: string;
+  balance_after: string;
+  pnl: string;
+  fees: string;
+  reason: string;
+  proof_id: string;
+};
+
 const DEFAULT_PROMPT =
-  "Evaluate BTC momentum, funding pressure, and volatility. Only approve a simulated Bitget futures order if the risk firewall passes.";
+  "Evaluate BTC momentum, funding pressure, and volatility. Only record a paper futures order if the risk firewall passes.";
 
 const starterProof: ProofCard = {
   id: "VG-DEMO-READY",
@@ -130,7 +167,7 @@ const starterProof: ProofCard = {
     entry: 104800,
     stopLoss: 102914,
     takeProfit: 108194,
-    rationale: "Signals agree enough to approve a simulation-only order.",
+    rationale: "Signals agree enough to approve a paper order intent.",
   },
   backtest: {
     totalReturn: 4.82,
@@ -151,7 +188,7 @@ const starterProof: ProofCard = {
     "Loaded Bitget futures market data or deterministic fallback.",
     "Scored independent strategy signals.",
     "Applied risk firewall before any order intent.",
-    "Recorded simulation-only order and backtest metrics.",
+    "Recorded paper order intent and backtest metrics.",
   ],
 };
 
@@ -179,6 +216,41 @@ function signalLabel(score: number) {
   return "neutral";
 }
 
+function parseCsv(text: string): PaperLogRow[] {
+  const [headerLine, ...lines] = text.trim().split(/\r?\n/);
+  const headers = headerLine.split(",") as Array<keyof PaperLogRow>;
+
+  return lines
+    .map((line) => {
+      const values: string[] = [];
+      let current = "";
+      let quoted = false;
+
+      for (let index = 0; index < line.length; index += 1) {
+        const char = line[index];
+        const next = line[index + 1];
+
+        if (char === '"' && quoted && next === '"') {
+          current += '"';
+          index += 1;
+        } else if (char === '"') {
+          quoted = !quoted;
+        } else if (char === "," && !quoted) {
+          values.push(current);
+          current = "";
+        } else {
+          current += char;
+        }
+      }
+      values.push(current);
+
+      return Object.fromEntries(
+        headers.map((header, index) => [header, values[index] ?? ""]),
+      ) as PaperLogRow;
+    })
+    .filter((row) => row.timestamp);
+}
+
 export default function Home() {
   const didAutoRun = useRef(false);
   const [symbol, setSymbol] = useState<SymbolId>("BTCUSDT");
@@ -192,11 +264,14 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [evidence, setEvidence] = useState<EvidenceSummary | null>(null);
+  const [paperRows, setPaperRows] = useState<PaperLogRow[]>([]);
 
   const passCount = useMemo(
     () => proof.riskChecks.filter((check) => check.status === "pass").length,
     [proof],
   );
+  const latestPaperRows = useMemo(() => paperRows.slice(-5).reverse(), [paperRows]);
 
   async function runAgent() {
     setLoading(true);
@@ -236,6 +311,28 @@ export default function Home() {
     void runAgent();
   }, []);
 
+  useEffect(() => {
+    async function loadEvidence() {
+      try {
+        const [summaryResponse, paperResponse] = await Promise.all([
+          fetch("/evidence/backtest-summary.json", { cache: "no-store" }),
+          fetch("/evidence/paper-trading-log.csv", { cache: "no-store" }),
+        ]);
+        if (summaryResponse.ok) {
+          setEvidence((await summaryResponse.json()) as EvidenceSummary);
+        }
+        if (paperResponse.ok) {
+          setPaperRows(parseCsv(await paperResponse.text()));
+        }
+      } catch {
+        setEvidence(null);
+        setPaperRows([]);
+      }
+    }
+
+    void loadEvidence();
+  }, []);
+
   async function copyProof() {
     const payload = {
       id: proof.id,
@@ -260,22 +357,22 @@ export default function Home() {
           <p className="eyebrow">Bitget AI Base Camp S1 / Trading Agent</p>
           <h1>VibeGuard</h1>
           <p className="tagline">
-            A proof-of-strategy trading agent that records every signal, risk gate, simulated order,
-            and backtest result before any autonomous action.
+            A paper trading agent that publishes every signal, risk gate, paper order, balance
+            change, and backtest result before any autonomous action.
           </p>
         </div>
         <div className="heroStats">
           <div>
             <span>loop</span>
-            <strong>perceive - decide - risk - prove</strong>
+            <strong>perceive - decide - paper trade - prove</strong>
           </div>
           <div>
             <span>mode</span>
-            <strong>simulation only</strong>
+            <strong>paper trading ledger</strong>
           </div>
           <div>
             <span>evidence</span>
-            <strong>proof cards</strong>
+            <strong>CSV log + backtest report</strong>
           </div>
         </div>
       </section>
@@ -361,6 +458,64 @@ export default function Home() {
         </aside>
 
         <section className="mainColumn">
+          <section className="panel evidencePanel">
+            <div className="panelHeader">
+              <span className="dot" />
+              <h2>Evidence Center</h2>
+            </div>
+            <div className="evidenceGrid">
+              <div>
+                <span>Backtest Return</span>
+                <strong>{evidence ? formatPct(evidence.metrics.totalReturnPct) : "loading"}</strong>
+                <p>{evidence ? `${evidence.metrics.trades} trades / Sharpe ${formatNumber(evidence.metrics.sharpe)}` : "Run pnpm backtest to regenerate."}</p>
+              </div>
+              <div>
+                <span>Paper Balance</span>
+                <strong>{evidence ? formatUsd(evidence.metrics.endingBalance) : "loading"}</strong>
+                <p>{paperRows.length} paper cycles in public CSV.</p>
+              </div>
+              <div>
+                <span>Max Drawdown</span>
+                <strong>{evidence ? formatPct(evidence.metrics.maxDrawdownPct) : "loading"}</strong>
+                <p>Risk-gated strategy, 20% equity cap, 3x max leverage.</p>
+              </div>
+            </div>
+            <div className="evidenceLinks">
+              <a href="/evidence/paper-trading-log.csv">paper trading log</a>
+              <a href="/evidence/backtest-report.md">backtest report</a>
+              <a href="/evidence/backtest-summary.json">summary json</a>
+              <a href="/evidence/equity-curve.csv">equity curve</a>
+            </div>
+            <div className="paperTableWrap">
+              <table className="paperTable">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Pair</th>
+                    <th>Side</th>
+                    <th>Price</th>
+                    <th>Size</th>
+                    <th>Balance Change</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {latestPaperRows.map((row) => (
+                    <tr key={row.proof_id}>
+                      <td>{row.timestamp}</td>
+                      <td>{row.pair}</td>
+                      <td>{row.side}</td>
+                      <td>{formatUsd(Number(row.price))}</td>
+                      <td>{Number(row.size).toFixed(5)}</td>
+                      <td>
+                        {formatUsd(Number(row.balance_before))} {"->"} {formatUsd(Number(row.balance_after))}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
           <div className="panel proofHeader">
             <div>
               <p className="eyebrow">latest proof card</p>
@@ -516,7 +671,7 @@ export default function Home() {
             </div>
             <div className="orderGrid">
               <div>
-                <span>Simulated Order</span>
+                <span>Paper Order Intent</span>
                 <strong>{proof.simulatedOrder.clientOid}</strong>
                 <p>
                   {proof.simulatedOrder.side.toUpperCase()} {proof.simulatedOrder.size}{" "}

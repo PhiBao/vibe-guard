@@ -1,0 +1,39 @@
+{
+  "generatedAt": "2026-06-19T11:59:15.084Z",
+  "engine": "Regime-Adaptive Majors Rotation",
+  "mode": "reproducible_backtest",
+  "dataSources": {
+    "BTCUSDT": "bitget",
+    "ETHUSDT": "bitget",
+    "SOLUSDT": "bitget"
+  },
+  "universe": [
+    "BTCUSDT",
+    "ETHUSDT",
+    "SOLUSDT"
+  ],
+  "risk": {
+    "startingBalance": 10000,
+    "feeRate": 0.0006,
+    "maxEquityPct": 0.2,
+    "maxLeverage": 3,
+    "dailyLossCapPct": 3,
+    "minConfidence": 48
+  },
+  "metrics": {
+    "startingBalance": 10000,
+    "endingBalance": 10220.431277470094,
+    "totalReturnPct": 2.2043127747009383,
+    "maxDrawdownPct": -5.4758534134758525,
+    "winRatePct": 52.77777777777778,
+    "trades": 36,
+    "flatCycles": 1,
+    "sharpe": 1.805642974698879
+  },
+  "files": {
+    "report": "/evidence/backtest-report.md",
+    "summary": "/evidence/backtest-summary.json",
+    "equityCurve": "/evidence/equity-curve.csv",
+    "paperLog": "/evidence/paper-trading-log.csv"
+  }
+}

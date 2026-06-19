@@ -7,7 +7,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "backtest": "node scripts/backtest.mjs",
+    "paper:run": "node scripts/paper-run.mjs",
+    "validate:evidence": "node scripts/validate-evidence.mjs"
   },
   "dependencies": {
     "next": "16.2.9",
